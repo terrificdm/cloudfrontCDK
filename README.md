@@ -6,7 +6,8 @@ This is a project for using CDK TypeScript to deploy CloudFront with Lambda@Edge
 > The L@E and CFF will be functional basing on "CloudFront-Viewer-Country" header, and you can change with other country code you like via function codes.  
 
 # Build
-make sure you follow the [AWS CDK Prerequisites](https://docs.aws.amazon.com/cdk/latest/guide/work-with.html#work-with-prerequisites) before you build the project.
+* Make sure you follow the [AWS CDK Prerequisites](https://docs.aws.amazon.com/cdk/latest/guide/work-with.html#work-with-prerequisites) before you build the project.
+* Clone this project and change the directory to the root folder of the project, and run below commands:
 ```bash
 $ npm install -g aws-cdk
 $ npm install  
@@ -14,6 +15,7 @@ $ cdk bootstrap
 ```
 
 # Deploy  
+* Run commands as below:
 ```bash
 $ cdk synth
 $ cdk deploy
