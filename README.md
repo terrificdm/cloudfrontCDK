@@ -1,14 +1,14 @@
-# Welcome to your CDK TypeScript project!
+# This is a project for using CDK TypeScript to deploy CloudFront with Lambda@Edge and CloudFront Functions for a example website which consists of static content as well as dynamic content!
 
 This is a blank project for TypeScript development with CDK.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+# Build
 
-## Useful commands
+$ npm install -g aws-cdk
+$ npm install 
+$ npm run build
 
- * `npm run build`   compile typescript to js
- * `npm run watch`   watch for changes and compile
- * `npm run test`    perform the jest unit tests
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk synth`       emits the synthesized CloudFormation template
+# Deploy
+
+$ cdk synth
+$ ckd deploy
