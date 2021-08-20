@@ -15,5 +15,5 @@ $ npm install
 # Deploy  
 ```bash
 $ cdk synth
-$ ckd deploy
+$ cdk deploy
 ```
