@@ -13,7 +13,7 @@ export class CloudfrontCdkStack extends cdk.Stack {
 
     // Create a S3 bucket to hold flask static content as well as flask program for EC2 to download and run
     const assetsBucket = new s3.Bucket(this, 'AssetsBucket', {
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // S3 bucket auto-deletion when using "cdk destroy" command
       autoDeleteObjects: true
     });
     
