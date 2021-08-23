@@ -172,7 +172,7 @@ export class CloudfrontCdkStack extends cdk.Stack {
     
     const distribution = new cloudfront.Distribution(this, 'myDist', {
       defaultBehavior: {
-        origin: new origins.HttpOrigin(instance.instancePublicDnsName,{
+        origin: new origins.HttpOrigin(httpOrigin,{
           protocolPolicy:cloudfront.OriginProtocolPolicy.HTTP_ONLY
         }),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -189,7 +189,7 @@ export class CloudfrontCdkStack extends cdk.Stack {
       },
       additionalBehaviors: {
         '/static/*': {
-          origin: new origins.S3Origin(assetsBucket),
+          origin: new origins.S3Origin(s3Origin),
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED
         }
