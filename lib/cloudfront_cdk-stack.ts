@@ -11,7 +11,7 @@ export class CloudfrontCdkStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // Create a S3 bucket to hold flask static content as well as flask program for EC2 to download and run
+    /* Create a S3 bucket to hold flask static content as well as flask program for EC2 to download and run */
     const assetsBucket = new s3.Bucket(this, 'AssetsBucket', {
       removalPolicy: cdk.RemovalPolicy.DESTROY, // S3 bucket auto-deletion when using "cdk destroy" command
       autoDeleteObjects: true
@@ -31,7 +31,7 @@ export class CloudfrontCdkStack extends cdk.Stack {
       description: 'The S3 bucket for storing static content of flask app'
     });
     
-    // Create an EC2 to run flask program which generates the dynamic content  
+    /* Create an EC2 to run flask program which generates the dynamic content */ 
     const vpc = ec2.Vpc.fromLookup(this, 'VPC', {isDefault: true,});
     
     const amznLinux = ec2.MachineImage.latestAmazonLinux({
@@ -75,7 +75,74 @@ export class CloudfrontCdkStack extends cdk.Stack {
       description: 'The EC2 for running flask app which generates dynamic content'
     });
     
-    // Create custom cache policy and origin request policy for L@E use case
+    const httpOrigin = instance.instancePublicDnsName;
+    const s3Origin = assetsBucket
+    
+    /* Example 1: Creat a stand CF distribution with 2 behaviors which use above EC2 and S3 as origins */
+    // const distribution = new cloudfront.Distribution(this, 'myDist', {
+    //   defaultBehavior: {
+    //     origin: new origins.HttpOrigin(httpOrigin,{
+    //       protocolPolicy:cloudfront.OriginProtocolPolicy.HTTP_ONLY
+    //     }),
+    //     viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    //     cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED
+    //   },
+    //   additionalBehaviors: {
+    //     '/static/*': {
+    //       origin: new origins.S3Origin(s3Origin),
+    //       viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    //       cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED
+    //     }
+    //   }
+    // });
+    
+    /* Example 2: Create a L@E function and a CF distribution, then associate the L@E function to a specific behavior of CF distribution */
+    // const customCachePolicy = new cloudfront.CachePolicy(this, 'customCachePolicy', {
+    //   cachePolicyName: 'customCachePolicy-Lambda',
+    //   comment: 'Lambda will modify the TTL via "cache-control" header',
+    //   defaultTtl: cdk.Duration.seconds(0), 
+    //   minTtl: cdk.Duration.seconds(0),
+    //   maxTtl:cdk.Duration.seconds(3600),
+    //   enableAcceptEncodingBrotli: true,
+    //   enableAcceptEncodingGzip: true,
+    //   headerBehavior: cloudfront.CacheHeaderBehavior.allowList('CloudFront-Viewer-Country')
+    // }); // Create a custom cache policy reserved for L@E
+    
+    // const customOriginRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'customOriginRequestPolicy', {
+    //   originRequestPolicyName: 'customOriginRequestPolicy-Lambda',
+    //   comment: 'Pass the "CloudFront-Viewer-Country" header to origin',
+    //   headerBehavior: cloudfront.OriginRequestHeaderBehavior.allowList('CloudFront-Viewer-Country')
+    // }); // Create a custom origin request policy reserved for L@E
+    
+    // const lambdaFunc = new lambda.Function(this, 'LambdaFunction', {
+    //   runtime: lambda.Runtime.NODEJS_14_X,
+    //   handler: 'index.handler',
+    //   code: lambda.Code.fromAsset('./functions/lambda')
+    // });
+    
+    // const distribution = new cloudfront.Distribution(this, 'myDist', {
+    //   defaultBehavior: {
+    //     origin: new origins.HttpOrigin(httpOrigin,{
+    //       protocolPolicy:cloudfront.OriginProtocolPolicy.HTTP_ONLY
+    //     }),
+    //     viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    //     cachePolicy: customCachePolicy,
+    //     originRequestPolicy: customOriginRequestPolicy,
+    //     edgeLambdas: [{
+    //       functionVersion: lambdaFunc.currentVersion,
+    //       eventType: cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST
+    //     }]
+    //   },
+    //   additionalBehaviors: {
+    //     '/static/*': {
+    //       origin: new origins.S3Origin(s3Origin),
+    //       viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+    //       cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED
+    //     }
+    //   }
+    // });
+    
+    /* Example 3: Create a CF function, L@E function and a CF distribution, then associate them to a specific behavior of CF distribution */
     const customCachePolicy = new cloudfront.CachePolicy(this, 'customCachePolicy', {
       cachePolicyName: 'customCachePolicy-Lambda',
       comment: 'Lambda will modify the TTL via "cache-control" header',
@@ -85,44 +152,14 @@ export class CloudfrontCdkStack extends cdk.Stack {
       enableAcceptEncodingBrotli: true,
       enableAcceptEncodingGzip: true,
       headerBehavior: cloudfront.CacheHeaderBehavior.allowList('CloudFront-Viewer-Country')
-    });
+    }); // Create a custom cache policy reserved for L@E
     
     const customOriginRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'customOriginRequestPolicy', {
       originRequestPolicyName: 'customOriginRequestPolicy-Lambda',
       comment: 'Pass the "CloudFront-Viewer-Country" header to origin',
       headerBehavior: cloudfront.OriginRequestHeaderBehavior.allowList('CloudFront-Viewer-Country')
-    });
+    }); // Create a custom origin request policy reserved for L@E
     
-    // // Create a L@E function and a CF distribution, then associate the L@E function with a specific behavior of CF distribution
-    // const lambdafunc = new lambda.Function(this, 'LambdaFunction', {
-    //   runtime: lambda.Runtime.PYTHON_3_8,
-    //   handler: 'lambda_function.lambda_handler',
-    //   code: lambda.Code.fromAsset('./functions/lambda')
-    // });
-    
-    // const distribution = new cloudfront.Distribution(this, 'myDist', {
-    //   defaultBehavior: {
-    //     origin: new origins.HttpOrigin(instance.instancePublicDnsName,{
-    //       protocolPolicy:cloudfront.OriginProtocolPolicy.HTTP_ONLY
-    //     }),
-    //     viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    //     cachePolicy: customCachePolicy,
-    //     originRequestPolicy: customOriginRequestPolicy,
-    //     edgeLambdas: [{
-    //       functionVersion: lambdafunc.currentVersion,
-    //       eventType: cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST
-    //     }]
-    //   },
-    //   additionalBehaviors: {
-    //     '/static/*': {
-    //       origin: new origins.S3Origin(assetsBucket),
-    //       viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    //       cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED
-    //     }
-    //   }
-    // });
-    
-    // Create a CF function, L@E function and a CF distribution, then associate with a specific behavior of CF distribution
     const cfFunc = new cloudfront.Function(this, 'CFFunction', {
       code: cloudfront.FunctionCode.fromFile({filePath: './functions/cffunc/cffunc.js'})
     })
