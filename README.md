@@ -2,7 +2,7 @@
 This is a project for using CDK TypeScript to deploy CloudFront with Lambda@Edge and CloudFront Functions for a Flask website which consists of static content as well as dynamic content.  
 * For demonstrate L@E, you should access CF domain name from JP.  
 * For demonstrate CFF, you should access CF domain name from CN.  
-* For accessing from other counties, there will be a normal Flask website(without trigger L@E and CFF).
+* For accessing from other counties, there will be a normal Flask website(without triggering L@E and CFF).
 > The L@E and CFF will be functional basing on "CloudFront-Viewer-Country" header, and you can change with other country codes which you like via modifying function codes.  
 
 # Build
