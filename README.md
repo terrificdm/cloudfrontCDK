@@ -1,5 +1,5 @@
 # CloudFront CDK Deployment  
-This is an example for using CDK TypeScript to deploy CloudFront with Lambda@Edge and CloudFront Functions for a Flask website which consists of static content as well as dynamic content.  https://github.com/terrificdm/cloudfrontCDK/blob/main/README.md
+This is an example for using CDK TypeScript to deploy CloudFront with Lambda@Edge and CloudFront Functions for a Flask website which consists of static content as well as dynamic content.  
 * For demonstrate L@E, you should access CF domain name from JP.  
 * For demonstrate CFF, you should access CF domain name from CN.  
 * For accessing from other countries, there will be a normal Flask website(without triggering L@E and CFF).
