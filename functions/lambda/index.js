@@ -13,14 +13,6 @@ exports.handler = (event, context, callback) => {
         if (
             countryCode == 'JP' // Choose a country code
             ) {
-                const date = new Date((new Date()).getTime());
-                const Y = date.getFullYear() + '-';
-                const M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-';
-                const D = (date.getDate() < 10 ? '0'+date.getDate() : date.getDate()) + ' ';
-                const h = (date.getHours() < 10 ? '0'+date.getHours() : date.getHours()) + ':';
-                const m = (date.getMinutes() < 10 ? '0'+date.getMinutes() : date.getMinutes()) + ':';
-                const s = (date.getSeconds() < 10 ? '0'+date.getSeconds() : date.getSeconds());
-                const time = Y+M+D+h+m+s;
                 const response = {
                     status: '200',
                     statusDescription: 'OK',
