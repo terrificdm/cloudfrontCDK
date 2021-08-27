@@ -38,17 +38,17 @@ export class CloudfrontCdkStack extends cdk.Stack {
       generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2
     });
     
-    const iam_role = new iam.Role(this, 'InstanceReadS3', {
+    const instance_role = new iam.Role(this, 'InstanceReadS3', {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com')
     });
-    iam_role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3ReadOnlyAccess'));
+    instance_role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3ReadOnlyAccess'));
     
     const instance = new ec2.Instance(this, 'Instance',{
       vpc: vpc,
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       machineImage: amznLinux,
       keyName:'demo', // you need to modify the key_name with your key-pairs name!
-      role: iam_role
+      role: instance_role
     });
     
     instance.userData.addS3DownloadCommand({
@@ -79,70 +79,24 @@ export class CloudfrontCdkStack extends cdk.Stack {
     const s3Origin = assetsBucket
     
     /* Example 1: Creat a stand CF distribution with 2 behaviors which use above EC2 and S3 as origins */
-    // const distribution = new cloudfront.Distribution(this, 'myDist', {
-    //   defaultBehavior: {
-    //     origin: new origins.HttpOrigin(httpOrigin,{
-    //       protocolPolicy:cloudfront.OriginProtocolPolicy.HTTP_ONLY
-    //     }),
-    //     viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    //     cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED
-    //   },
-    //   additionalBehaviors: {
-    //     '/static/*': {
-    //       origin: new origins.S3Origin(s3Origin),
-    //       viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    //       cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED
-    //     }
-    //   }
-    // });
+    const distribution = new cloudfront.Distribution(this, 'myDist', {
+      defaultBehavior: {
+        origin: new origins.HttpOrigin(httpOrigin,{
+          protocolPolicy:cloudfront.OriginProtocolPolicy.HTTP_ONLY
+        }),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED
+      },
+      additionalBehaviors: {
+        '/static/*': {
+          origin: new origins.S3Origin(s3Origin),
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED
+        }
+      }
+    });
     
-    /* Example 2: Create a L@E function and a CF distribution, then associate the L@E function to a specific behavior of CF distribution */
-    // const customCachePolicy = new cloudfront.CachePolicy(this, 'customCachePolicy', {
-    //   cachePolicyName: 'customCachePolicy-Lambda',
-    //   comment: 'Lambda will modify the TTL via "cache-control" header',
-    //   defaultTtl: cdk.Duration.seconds(0), 
-    //   minTtl: cdk.Duration.seconds(0),
-    //   maxTtl:cdk.Duration.seconds(3600),
-    //   enableAcceptEncodingBrotli: true,
-    //   enableAcceptEncodingGzip: true,
-    //   headerBehavior: cloudfront.CacheHeaderBehavior.allowList('CloudFront-Viewer-Country')
-    // }); // Create a custom cache policy reserved for L@E
-    
-    // const customOriginRequestPolicy = new cloudfront.OriginRequestPolicy(this, 'customOriginRequestPolicy', {
-    //   originRequestPolicyName: 'customOriginRequestPolicy-Lambda',
-    //   comment: 'Pass the "CloudFront-Viewer-Country" header to origin',
-    //   headerBehavior: cloudfront.OriginRequestHeaderBehavior.allowList('CloudFront-Viewer-Country')
-    // }); // Create a custom origin request policy reserved for L@E
-    
-    // const lambdaFunc = new lambda.Function(this, 'LambdaFunction', {
-    //   runtime: lambda.Runtime.NODEJS_14_X,
-    //   handler: 'index.handler',
-    //   code: lambda.Code.fromAsset('./functions/lambda')
-    // });
-    
-    // const distribution = new cloudfront.Distribution(this, 'myDist', {
-    //   defaultBehavior: {
-    //     origin: new origins.HttpOrigin(httpOrigin,{
-    //       protocolPolicy:cloudfront.OriginProtocolPolicy.HTTP_ONLY
-    //     }),
-    //     viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    //     cachePolicy: customCachePolicy,
-    //     originRequestPolicy: customOriginRequestPolicy,
-    //     edgeLambdas: [{
-    //       functionVersion: lambdaFunc.currentVersion,
-    //       eventType: cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST
-    //     }]
-    //   },
-    //   additionalBehaviors: {
-    //     '/static/*': {
-    //       origin: new origins.S3Origin(s3Origin),
-    //       viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-    //       cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED
-    //     }
-    //   }
-    // });
-    
-    /* Example 3: Create a CF function, L@E function and a CF distribution, then associate them to a specific behavior of CF distribution */
+    /* Example 2: Basing on Example 1, create a L@E function and a CF distribution, then associate the L@E function to a specific behavior of CF distribution */
     const customCachePolicy = new cloudfront.CachePolicy(this, 'customCachePolicy', {
       cachePolicyName: 'customCachePolicy-Lambda',
       comment: 'Lambda will modify the TTL via "cache-control" header',
@@ -160,41 +114,43 @@ export class CloudfrontCdkStack extends cdk.Stack {
       headerBehavior: cloudfront.OriginRequestHeaderBehavior.allowList('CloudFront-Viewer-Country')
     }); // Create a custom origin request policy reserved for L@E
     
-    const cfFunc = new cloudfront.Function(this, 'CFFunction', {
-      code: cloudfront.FunctionCode.fromFile({filePath: './functions/cffunc/cffunc.js'})
-    })
+    // Create a iam role for L@E
+    const edge_role = new iam.Role(this, 'EdgeRole', {
+      assumedBy: new iam.CompositePrincipal(
+        new iam.ServicePrincipal('lambda.amazonaws.com'),
+        new iam.ServicePrincipal('edgelambda.amazonaws.com')
+      )
+    });
+    edge_role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')); 
     
     const lambdaFunc = new lambda.Function(this, 'LambdaFunction', {
       runtime: lambda.Runtime.NODEJS_14_X,
       handler: 'index.handler',
-      code: lambda.Code.fromAsset('./functions/lambda')
+      code: lambda.Code.fromAsset('./functions/lambda'),
+      role: edge_role
     });
-    
-    const distribution = new cloudfront.Distribution(this, 'myDist', {
-      defaultBehavior: {
-        origin: new origins.HttpOrigin(httpOrigin,{
-          protocolPolicy:cloudfront.OriginProtocolPolicy.HTTP_ONLY
-        }),
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        cachePolicy: customCachePolicy,
-        originRequestPolicy: customOriginRequestPolicy,
-        edgeLambdas: [{
-          functionVersion: lambdaFunc.currentVersion,
-          eventType: cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST
-        }],
-        functionAssociations:[{
-          function: cfFunc,
-          eventType: cloudfront.FunctionEventType.VIEWER_REQUEST
-        }]
-      },
-      additionalBehaviors: {
-        '/static/*': {
-          origin: new origins.S3Origin(s3Origin),
-          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-          cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED
-        }
+ 
+    const dist = distribution.node.defaultChild as cloudfront.CfnDistribution;
+    dist.addPropertyOverride('DistributionConfig.DefaultCacheBehavior.CachePolicyId', customCachePolicy.cachePolicyId);
+    dist.addPropertyOverride('DistributionConfig.DefaultCacheBehavior.OriginRequestPolicyId', customOriginRequestPolicy.originRequestPolicyId);
+    dist.addPropertyOverride('DistributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations', [
+      {
+        EventType: cloudfront.LambdaEdgeEventType.ORIGIN_REQUEST,
+        LambdaFunctionARN: lambdaFunc.currentVersion.edgeArn
       }
-    });
+    ]);
+   
+    /* Example 3: Basing on Example 2, create a CF function and associate it to a specific behavior of CF distribution */
+    const cfFunc = new cloudfront.Function(this, 'CFFunction', {
+      code: cloudfront.FunctionCode.fromFile({filePath: './functions/cffunc/cffunc.js'})
+    })
+    
+    dist.addPropertyOverride('DistributionConfig.DefaultCacheBehavior.FunctionAssociations', [
+      {
+        EventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+        FunctionARN: cfFunc.functionArn
+      }
+    ]);
     
     new cdk.CfnOutput(this, 'CFDistributionConsole', {
       value: 'https://console.aws.amazon.com/cloudfront/v3/home?#/distributions/'+distribution.distributionId,
