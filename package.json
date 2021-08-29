@@ -15,13 +15,8 @@
   },
   "dependencies": {
     "@aws-cdk/core": "*",
-    "@aws-cdk/aws-s3": "*",
     "@aws-cdk/aws-s3-deployment": "*",
-    "@aws-cdk/aws-ec2": "*",
-    "@aws-cdk/aws-iam": "*",
-    "@aws-cdk/aws-cloudfront": "*",
     "@aws-cdk/aws-cloudfront-origins": "*",
-    "@aws-cdk/aws-lambda": "*",
     "source-map-support": "^0.5.16"
   }
 }
