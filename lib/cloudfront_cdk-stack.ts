@@ -1,6 +1,7 @@
 import * as cdk from '@aws-cdk/core';
 import * as s3 from '@aws-cdk/aws-s3';
 import * as s3deploy from '@aws-cdk/aws-s3-deployment';
+import * as assets from '@aws-cdk/aws-s3-assets';
 import * as ec2 from '@aws-cdk/aws-ec2';
 import * as iam from '@aws-cdk/aws-iam';
 import * as cloudfront from '@aws-cdk/aws-cloudfront';
@@ -11,57 +12,53 @@ export class CloudfrontCdkStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    /* Create a S3 bucket to hold flask static content as well as flask program for EC2 to download and run */
-    const assetsBucket = new s3.Bucket(this, 'AssetsBucket', {
+    /* Create a S3 bucket to hold flask static content */
+    const staticBucket = new s3.Bucket(this, 'AssetsBucket', {
       removalPolicy: cdk.RemovalPolicy.DESTROY, // S3 bucket auto-deletion when using "cdk destroy" command
       autoDeleteObjects: true
     });
     
     new s3deploy.BucketDeployment(this, 'StaticAssets', {
-      sources: [s3deploy.Source.asset('./flask-demo')],
-      destinationBucket: assetsBucket,
-    });
+      sources: [s3deploy.Source.asset('./flask-demo/static')],
+      destinationBucket: staticBucket,
+      destinationKeyPrefix: 'static'
+    }); // Upload static content to S3 bucket for Flask website
+    
+    const appAssets = new assets.Asset(this, 'AppAssets', {
+      path: './flask-demo/app'
+    }); // Upload Flask app files as a zip file to assets bucket for EC2 to download and run
+
     
     new cdk.CfnOutput(this, 'BucketConsole', {
-      value: 'https://console.aws.amazon.com/s3/buckets/'+assetsBucket.bucketName,
+      value: 'https://console.aws.amazon.com/s3/buckets/'+staticBucket.bucketName,
       description: 'The AWS console for specific S3 bucket'
     });
     new cdk.CfnOutput(this, 'BucketName', {
-      value: assetsBucket.bucketName,
+      value: staticBucket.bucketName,
       description: 'The S3 bucket for storing static content of flask app'
     });
     
-    /* Create an EC2 to run flask program which generates the dynamic content */ 
+    /* Create an EC2 to run flask app which generates the dynamic content */ 
     const vpc = ec2.Vpc.fromLookup(this, 'VPC', {isDefault: true,});
     
     const amznLinux = ec2.MachineImage.latestAmazonLinux({
       generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2
     });
     
-    const instance_role = new iam.Role(this, 'InstanceReadS3', {
-      assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com')
-    });
-    instance_role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3ReadOnlyAccess'));
-    
     const instance = new ec2.Instance(this, 'Instance',{
       vpc: vpc,
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       machineImage: amznLinux,
-      keyName:'demo', // You need to modify the value of keyName with your own key-pairs name!
-      role: instance_role
+      keyName:'demo' // You need to modify the value of keyName with your own key-pairs name!
     });
     
+    appAssets.grantRead(instance.role);
     instance.userData.addS3DownloadCommand({
-      bucket:assetsBucket,
-      bucketKey: 'flask.zip'
+      bucket: appAssets.bucket,
+      bucketKey: appAssets.s3ObjectKey,
+      localFile: '/tmp/app.zip'
     });
-    
-    instance.userData.addS3DownloadCommand({
-      bucket:assetsBucket,
-      bucketKey: 'start.sh'
-    });
-    
-    instance.userData.addCommands('cd /tmp && chmod +x start.sh && ./start.sh');
+    instance.userData.addCommands('cd /tmp && unzip app.zip && chmod +x start.sh && ./start.sh');
     
     instance.connections.allowFromAnyIpv4(ec2.Port.tcp(22), 'Allow ssh from internet');
     instance.connections.allowFromAnyIpv4(ec2.Port.tcp(80), 'Allow http from internet');
@@ -76,7 +73,7 @@ export class CloudfrontCdkStack extends cdk.Stack {
     });
     
     const httpOrigin = instance.instancePublicDnsName;
-    const s3Origin = assetsBucket
+    const s3Origin = staticBucket
     
     /* Example 1: Creat a stand CF distribution with 2 behaviors which use above EC2 and S3 as origins */
     const distribution = new cloudfront.Distribution(this, 'myDist', {
