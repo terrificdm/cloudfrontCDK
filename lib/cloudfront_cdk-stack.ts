@@ -47,7 +47,7 @@ export class CloudfrontCdkStack extends cdk.Stack {
       vpc: vpc,
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       machineImage: amznLinux,
-      keyName:'demo', // you need to modify the key_name with your key-pairs name!
+      keyName:'demo', // you need to modify the value of keyName with your own key-pairs name!
       role: instance_role
     });
     
