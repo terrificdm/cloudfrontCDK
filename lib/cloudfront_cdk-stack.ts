@@ -58,7 +58,7 @@ export class CloudfrontCdkStack extends cdk.Stack {
       bucketKey: appAssets.s3ObjectKey,
       localFile: '/tmp/app.zip'
     });
-    instance.userData.addCommands('cd /tmp && unzip app.zip && chmod +x start.sh && ./start.sh');
+    instance.userData.addCommands('cd /tmp && unzip -o app.zip && chmod +x start.sh && ./start.sh && rm /var/lib/cloud/instance/sem/config_scripts_user');
     
     instance.connections.allowFromAnyIpv4(ec2.Port.tcp(22), 'Allow ssh from internet');
     instance.connections.allowFromAnyIpv4(ec2.Port.tcp(80), 'Allow http from internet');
