@@ -7,7 +7,7 @@ This is an example for using CDK TypeScript to deploy CloudFront with Lambda@Edg
 
 > The L@E and CFF will be functional basing on "CloudFront-Viewer-Country" header, and you can change with other country codes which you like via modifying function codes.  
 
-> If you want to decouple the deployment for Application(Infra) layer and CloudFront layer, pls refer to this [repo](https://github.com/terrificdm/CloufrontCdkDemo).  
+> If you want to decouple the deployment for Application(Infra) layer and CloudFront layer, pls refer to this [repo](https://github.com/terrificdm/CloudfrontCdkDemo).  
 
 > Since the L@E is required to be deployed in us-east-1, all of resources of this example are deployed in us-east-1 for easy demonstration.
 
