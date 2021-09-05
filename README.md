@@ -9,7 +9,7 @@ This is an example for using CDK TypeScript to deploy CloudFront with Lambda@Edg
 
 > If you want to decouple the deployment for Application(Infra) layer and CloudFront layer, pls refer to this [repo](https://github.com/terrificdm/CloudfrontCdkDemo).  
 
-> Since the L@E is required to be deployed in us-east-1, all of resources of this example are deployed in us-east-1 for easy demonstration.
+> Since the L@E is required to be deployed in us-east-1, all of resources of this example are deployed in **"us-east-1" region** for easy demonstration.
 
 # Build
 * Make sure you follow the [AWS CDK Prerequisites](https://docs.aws.amazon.com/cdk/latest/guide/work-with.html#work-with-prerequisites) before you build the project.
