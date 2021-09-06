@@ -121,11 +121,17 @@ export class CloudfrontCdkStack extends cdk.Stack {
     // });
     // edge_role.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')); 
     
+    // const lambdaFunc = new lambda.Function(this, 'LambdaFunction', {
+    //   runtime: lambda.Runtime.NODEJS_14_X,
+    //   handler: 'index.handler',
+    //   code: lambda.Code.fromAsset('./functions/lambda'),
+    //   role: edge_role
+    // }); //Use a "normal" lambda.Function to deploy L@E
+    
     const lambdaFunc = new EdgeFunction(this, 'LambdaFunction', {
       runtime: lambda.Runtime.NODEJS_14_X,
       handler: 'index.handler',
       code: lambda.Code.fromAsset('./functions/lambda'),
-      // role: edge_role, //only needed if you want to use a "normal" lambda.Function
       stackId: 'LambdaEdgeStack'
     });
  
