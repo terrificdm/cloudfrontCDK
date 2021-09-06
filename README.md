@@ -9,7 +9,9 @@ This is an example for using CDK TypeScript to deploy CloudFront with Lambda@Edg
 
 > If you want to decouple the deployment for Application(Infra) layer and CloudFront layer, pls refer to this [repo](https://github.com/terrificdm/CloudfrontCdkDemo).  
 
-> Since the L@E is required to be deployed in us-east-1, all of resources of this example are deployed in **"us-east-1" region** for easy demonstration.
+> Since the L@E is required to be deployed in  **"us-east-1"** , we leverage the "cloudfront.experimental.EdgeFunction" to deploy L@E, which is required [us-east-1 region has been bootstrapped](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-cloudfront-readme.html#lambdaedge).Be sure to bootstrap us-east-1 region first if you are going to deploy from regions rather than us-east-1.  
+
+> You need to **replace the value of keyName with your own key-pairs name** in lib/cloudfront_cdk-stack.ts before you deploy stack.
 
 # Build
 * Make sure you follow the [AWS CDK Prerequisites](https://docs.aws.amazon.com/cdk/latest/guide/work-with.html#work-with-prerequisites) before you build the project.
@@ -23,6 +25,6 @@ $ cdk bootstrap
 # Deploy  
 * Run commands as below:
 ```bash
-$ cdk synth
-$ cdk deploy
+$ cdk synth CloudfrontCdkStack
+$ cdk deploy CloudfrontCdkStack
 ```
