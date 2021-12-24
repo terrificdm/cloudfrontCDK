@@ -1,16 +1,18 @@
-import * as cdk from '@aws-cdk/core';
-import * as s3 from '@aws-cdk/aws-s3';
-import * as s3deploy from '@aws-cdk/aws-s3-deployment';
-import * as assets from '@aws-cdk/aws-s3-assets';
-import * as ec2 from '@aws-cdk/aws-ec2';
-import * as iam from '@aws-cdk/aws-iam';
-import * as cloudfront from '@aws-cdk/aws-cloudfront';
-import * as origins from '@aws-cdk/aws-cloudfront-origins';
-import * as lambda from '@aws-cdk/aws-lambda';
-import {EdgeFunction} from '@aws-cdk/aws-cloudfront/lib/experimental';
+import * as cdk from 'aws-cdk-lib';
+import { Stack, StackProps } from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
+import * as assets from 'aws-cdk-lib/aws-s3-assets';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+// import {EdgeFunction} from 'aws-cdk-lib/aws-cloudfront/lib/experimental';
 
-export class CloudfrontCdkStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+export class CloudfrontCdkStack extends Stack {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
     /* Create a S3 bucket to hold Flask website static content */
@@ -128,7 +130,7 @@ export class CloudfrontCdkStack extends cdk.Stack {
     //   role: edge_role
     // }); //Use a "normal" lambda.Function to deploy L@E
     
-    const lambdaFunc = new EdgeFunction(this, 'LambdaFunction', {
+    const lambdaFunc = new cloudfront.experimental.EdgeFunction(this, 'LambdaFunction', {
       runtime: lambda.Runtime.NODEJS_14_X,
       handler: 'index.handler',
       code: lambda.Code.fromAsset('./functions/lambda'),
@@ -165,6 +167,5 @@ export class CloudfrontCdkStack extends cdk.Stack {
       value: distribution.domainName,
       description: 'The CloudFront distribution for flask app'
     });
-    
   }
 }
