@@ -9,7 +9,6 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-// import {EdgeFunction} from 'aws-cdk-lib/aws-cloudfront/lib/experimental';
 
 export class CloudfrontCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
